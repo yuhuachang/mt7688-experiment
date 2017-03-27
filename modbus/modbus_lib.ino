@@ -107,12 +107,12 @@ int send_query(unsigned char *query, size_t string_length) {
     // Serial.print("S:");
 
     for (i = 0; i < string_length; i++) {
-        SSerial3.write(query[i]);
+        RS485Serial.write(query[i]);
         delay(5);
         // Serial.print(query[i],HEX );
         // Serial.print(","); 
     }
-    SSerial3.flush();
+    RS485Serial.flush();
     // Serial.println();
 
     digitalWrite(RS485CtrlPin, LOW);
@@ -142,7 +142,7 @@ int receive_response(unsigned char *received_string) {
     /* wait for a response; this will block! */
     //delay(500);
 
-    while(SSerial3.available() == 0 ) {
+    while(RS485Serial.available() == 0 ) {
         delay(5);
         if (i++ > TIMEOUT) {
             return bytes_received;
@@ -152,8 +152,8 @@ int receive_response(unsigned char *received_string) {
     /* FIXME: does Serial.available wait 1.5T or 3.5T before exiting the loop? */
        
     // Serial.print("R:");
-    while(SSerial3.available()) {
-        received_string[bytes_received] = SSerial3.read();
+    while(RS485Serial.available()) {
+        received_string[bytes_received] = RS485Serial.read();
         delay(5);
         // Serial.print(received_string[bytes_received],HEX );
         // Serial.print(",");
@@ -167,7 +167,7 @@ int receive_response(unsigned char *received_string) {
         }
         // delay(10);
     }   
-    // SSerial3.flush();
+    // RS485Serial.flush();
     delay(10);
     // Serial.println(); 
     // Serial.print("Byte:");

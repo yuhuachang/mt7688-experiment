@@ -3,40 +3,62 @@
 
 #define RS485Rx 14
 #define RS485Tx 16
-#define TIME_REQUEST 7
 #define RS485CtrlPin 15
 
-String inString = "";    // string to hold input
-unsigned long interframe_delay = 2;  /* Modbus t3.5 = 2 ms */
-int AC_no;
-int temp;
-int data[12];
-int state = 0;
-int retval;
+#define LED 13
 
-SoftwareSerial SSerial3(RS485Rx, RS485Tx);
+SoftwareSerial RS485Serial(RS485Rx, RS485Tx);
 
 void setup() {
-    const int baudrate = 9600;
-    if (baudrate <= 19200) {
-        interframe_delay = (unsigned long) (3.5 * 11 / baudrate);  /* Modbus t3.5 */
-    }
-    SSerial3.begin(baudrate);   /* format 8N1, DOES NOT comply with Modbus spec. */
-    Serial.begin(baudrate);
+    
+    RS485Serial.begin(9600); // RS485 serial
+    Serial.begin(9600); // debug serial
+    Serial1.begin(57600); // serial communication to MPU
+    
     pinMode(RS485CtrlPin, OUTPUT);
+    pinMode(LED, OUTPUT);
+    
+    digitalWrite(LED, LOW);
 }
 
 void loop() {
-    // set target device.
-    AC_no = 2;
 
-    // read temp from device.
-    retval = read_holding_registers(AC_no, 0x00, 1, data, 10);
-    temp = (unsigned int) (256 * (data[0] >> 8) + (data[0] & 0x00ff));
-    SSerial3.flush();
+    while (Serial1.available() > 0) {
+        digitalWrite(LED, HIGH);
 
-    Serial.println(temp);
+        char c = Serial1.read();
+        if (c > 0) {
+            Serial.print(c);
+            Serial.print("(");
+            Serial.print(c, HEX);
+            Serial.print(") ");
+        } else {
+            Serial.println();
+            test();
+        }
 
-    delay(5000);
+        digitalWrite(LED, LOW);
+    }
+}
+
+int test() {
+        // set target device.
+        int AC_no = 2;
+
+        // read temp from device.
+        int data[12];
+        int retval = read_holding_registers(AC_no, 0x00, 1, data, 10);
+        for (int i = 0; i < 12; i++) {
+            Serial.print("0x");
+            Serial.print(data[i], HEX);
+            Serial.print(" ");
+        }
+        Serial.println();
+        
+        int temp = (unsigned int) (256 * (data[0] >> 8) + (data[0] & 0x00ff));
+        RS485Serial.flush();
+    
+        Serial.println(temp);
+        Serial1.println(temp);
 }
 
